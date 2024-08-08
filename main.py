@@ -86,39 +86,51 @@ class MainWindow(Gtk.ApplicationWindow):
         result_stack.add_named(image_tab, "image")
         result_stack.set_visible_child_name("option")
 
+        column_list = Gtk.StringList()
+        for col in dataset1.columns.to_list():
+            column_list.append(col)
+
+        x_button: Gtk.DropDown = Gtk.DropDown.new(column_list)
+        x_button.set_enable_search(True)
+        option_tab.append(x_button)
+
+        y_button: Gtk.DropDown = Gtk.DropDown.new(column_list)
+        y_button.set_enable_search(True)
+        option_tab.append(y_button)
+
+        plot_butt = Gtk.Button(label='Plot')
+        option_tab.append(plot_butt)
+
+        main_box.set_center_widget(result_stack)
         if page_type == 'bar':
-            column_list = Gtk.StringList()
-            for col in dataset1.columns.to_list():
-                column_list.append(col)
-
-            x_button: Gtk.DropDown = Gtk.DropDown.new(column_list)
-            x_button.set_enable_search(True)
-            option_tab.append(x_button)
-
-            y_button: Gtk.DropDown = Gtk.DropDown.new(column_list)
-            y_button.set_enable_search(True)
-            option_tab.append(y_button)
-            # print(dataset1.columns.to_list())
-            # px.scatter(dataset1.head(50), x='Continent', y='TotalTests',
-            #            hover_data=['Country/Region', 'Continent'],
-            #            color='TotalTests', size='TotalTests', size_max=80, log_y=True).write_image("test.png")
-            # px.bar(dataset2, x="Date", y="Deaths", color="Deaths",
-            #        hover_data=["Confirmed", "Date", "Country/Region"],
-            #        log_y=False, height=400).write_image("bar2.png")
-
-            plot_butt = Gtk.Button(label='Plot')
-            plot_butt.connect('clicked', self.plot_graph, result_stack, image_tab, dataset1, x_button, y_button,
+            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab, dataset1, x_button, y_button,
                               column_list)
-            option_tab.append(plot_butt)
+        elif page_type == 'bubble':
+            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab, dataset1, x_button, y_button,
+                              column_list)
+        elif page_type == 'line':
+            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab, dataset1, x_button, y_button,
+                              column_list)
+        elif page_type == 'scatter':
+            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab, dataset1, x_button, y_button,
+                              column_list)
 
-            main_box.set_center_widget(result_stack)
-
-    def plot_graph(self, button, stack: Gtk.Stack, image_tab: Gtk.Box, dataset, x: Gtk.DropDown, y: Gtk.DropDown,
+    def plot_graph(self, button, graph_type, stack: Gtk.Stack, image_tab: Gtk.Box, dataset, x: Gtk.DropDown, y: Gtk.DropDown,
                    list: Gtk.StringList):
-        px.bar(dataset.head(15), x=list.get_item(x.get_selected()).get_string(),
-               y=list.get_item(y.get_selected()).get_string()).write_image("bar.png")
-        print('hello')
-        img = Gtk.Image().new_from_file("bar.png")
+        x = list.get_item(x.get_selected()).get_string()
+        y = list.get_item(y.get_selected()).get_string()
+        dataset = dataset.head(15)
+
+        if graph_type == 'bar':
+            px.bar(dataset, x=x, y=y, color=y).write_image(".temp.png")
+        elif graph_type == 'bubble':
+            px.scatter(dataset, x=x, y=y, size=y, color=y, size_max=80).write_image(".temp.png")
+        elif graph_type == 'line':
+            px.line(dataset, x=x, y=y).write_image(".temp.png")
+        elif graph_type == 'scatter':
+            px.scatter(dataset, x=x, y=y).write_image(".temp.png")
+
+        img = Gtk.Image().new_from_file(".temp.png")
         img.set_size_request(600, 600)
         image_tab.append(img)
         stack.set_visible_child_name("image")

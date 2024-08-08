@@ -1,24 +1,10 @@
 import gi
-# Data analysis and Manipulation
-import plotly.graph_objs as go
-import plotly.io as pio
-import plotly.express as px
-import pandas as pd
-import plotly.graph_objects as go
-
-# Data Visualization
-import matplotlib.pyplot as plt
-import plotly.offline
-from plotly.figure_factory import create_table
-
-# Importing Plotly
-import plotly.offline as py
-
-# import word cloud
-# from wordcloud import WordCloud
 
 gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk
+
+import pandas as pd
+import plotly.express as px
 
 
 class MainWindow(Gtk.ApplicationWindow):
@@ -36,9 +22,11 @@ class MainWindow(Gtk.ApplicationWindow):
 
         info_page = self._get_information_page()
 
-        label1 = Gtk.Label()
-        label1.set_markup('<big>A fancy label</big>')
-        stack.add_titled(label1, 'file', 'File Chooser')
+        file_page = Gtk.Box()
+        file_chooser = Gtk.Label(label="Open a .csv file")
+        file_page.append(file_chooser)
+
+        stack.add_titled(file_page, 'file', 'File Chooser')
         stack.add_titled(info_page, 'info', 'Info')
         stack.set_visible_child_name('file')
 
@@ -103,19 +91,20 @@ class MainWindow(Gtk.ApplicationWindow):
 
         main_box.set_center_widget(result_stack)
         if page_type == 'bar':
-            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab, dataset1, x_button, y_button,
-                              column_list)
+            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab,
+                              dataset1, x_button, y_button, column_list)
         elif page_type == 'bubble':
-            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab, dataset1, x_button, y_button,
-                              column_list)
+            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab,
+                              dataset1, x_button, y_button, column_list)
         elif page_type == 'line':
-            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab, dataset1, x_button, y_button,
-                              column_list)
+            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab,
+                              dataset1, x_button, y_button, column_list)
         elif page_type == 'scatter':
-            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab, dataset1, x_button, y_button,
-                              column_list)
+            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab,
+                              dataset1, x_button, y_button, column_list)
 
-    def plot_graph(self, button, graph_type, stack: Gtk.Stack, image_tab: Gtk.Box, dataset, x: Gtk.DropDown, y: Gtk.DropDown,
+    def plot_graph(self, button, graph_type, stack: Gtk.Stack, image_tab: Gtk.Box, dataset, x: Gtk.DropDown,
+                   y: Gtk.DropDown,
                    list: Gtk.StringList):
         x = list.get_item(x.get_selected()).get_string()
         y = list.get_item(y.get_selected()).get_string()
@@ -128,7 +117,7 @@ class MainWindow(Gtk.ApplicationWindow):
         elif graph_type == 'line':
             px.line(dataset, x=x, y=y).write_image(".temp.png")
         elif graph_type == 'scatter':
-            px.scatter(dataset, x=x, y=y).write_image(".temp.png")
+            px.scatter(dataset, x=x, y=y, color=y).write_image(".temp.png")
 
         img = Gtk.Image().new_from_file(".temp.png")
         img.set_size_request(600, 600)

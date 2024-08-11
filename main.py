@@ -1,49 +1,48 @@
 import gi
 
 gi.require_version('Gtk', '4.0')
+gi.require_version('Adw', '1')
 from gi.repository import Gtk
+from gi.repository import Adw
 
 import pandas as pd
 import plotly.express as px
 
 
-class MainWindow(Gtk.ApplicationWindow):
+class MainWindow(Adw.ApplicationWindow):
     def __init__(self, **kargs):
-        super().__init__(**kargs, title='Data Science Project')
+        super().__init__(**kargs, title='Data Analyzer')
         self.props.show_menubar = True
-        header = Gtk.HeaderBar()
-        self.set_titlebar(header)
+        info_page = self.get_main_layout()
 
-        stack = Gtk.Stack()
-        stack.props.transition_type = Gtk.StackTransitionType.OVER_LEFT_RIGHT
-        stack.props.transition_duration = 500
+        self.set_content(info_page)
 
-        self.set_child(stack)
+    def get_main_layout(self) -> Gtk.CenterBox:
+        main_box: Adw.NavigationSplitView = Adw.NavigationSplitView().new()
 
-        info_page = self._get_information_page()
+        sidebar: Adw.ToolbarView = Adw.ToolbarView().new()
+        sidebar_header: Adw.HeaderBar = Adw.HeaderBar().new()
+        sidebar_header.set_show_title(show_title=False)
+        sidebar.add_top_bar(sidebar_header)
+        sidebar_list_box: Gtk.ListBox = Gtk.ListBox().new()
+        sidebar_list_box.add_css_class("navigation-sidebar")
+        sidebar.set_content(sidebar_list_box)
+        sidebar = Adw.NavigationPage().new(child=sidebar, title='Sidebar')
 
-        file_page = Gtk.Box()
-        file_chooser = Gtk.Label(label="Open a .csv file")
-        file_page.append(file_chooser)
+        select_option_page: Adw.ToolbarView = Adw.ToolbarView().new()
+        select_option_page_header: Adw.HeaderBar = Adw.HeaderBar().new()
+        select_option_page_header.set_show_title(show_title=True)
+        select_option_page.add_top_bar(select_option_page_header)
 
-        stack.add_titled(file_page, 'file', 'File Chooser')
-        stack.add_titled(info_page, 'info', 'Info')
-        stack.set_visible_child_name('file')
+        stacks: Adw.NavigationView = Adw.NavigationView().new()
+        default_page: Adw.NavigationPage = Adw.NavigationPage().new_with_tag(child=Gtk.Label(label='Select an option!!'), title='Select Option', tag='option')
+        stacks.push(default_page)
+        select_option_page.set_content(stacks)
 
-        stack_switcher = Gtk.StackSwitcher()
-        stack_switcher.set_stack(stack)
-        header.set_title_widget(stack_switcher)
+        select_option_page = Adw.NavigationPage().new(child=select_option_page, title='content')
 
-    def _get_information_page(self) -> Gtk.CenterBox:
-        sidebar = Gtk.ListBox()
-
-        select_option_page = Gtk.Box()
-        select_option_page.set_size_request(600, 600)
-        select_option_page.append(Gtk.Label(label="Select an option!!"))
-
-        main_box = Gtk.CenterBox()
-        main_box.set_start_widget(sidebar)
-        main_box.set_center_widget(select_option_page)
+        main_box.set_sidebar(sidebar)
+        main_box.set_content(select_option_page)
 
         buttons = {
             'table': 'Table',
@@ -55,24 +54,20 @@ class MainWindow(Gtk.ApplicationWindow):
 
         for key, value in buttons.items():
             btn = Gtk.Button(label=value)
-            sidebar.append(btn)
-            btn.connect('clicked', self.select_result_page_callback, key, main_box)
+            sidebar.get_child().get_content().append(btn)
+            btn.connect('clicked', self.select_result_page_callback, key, stacks)
 
         return main_box
 
-    def select_result_page_callback(self, button: Gtk.Button, page_type: str, main_box: Gtk.CenterBox):
+    def select_result_page_callback(self, button: Gtk.Button, page_type: str, stacks: Adw.NavigationView):
         dataset1 = pd.read_csv("/home/towk/Projects/test/data-science/covid.csv")
 
         option_tab = Gtk.Box()
         option_tab.set_size_request(600, 600)
         image_tab = Gtk.Box()
 
-        result_stack = Gtk.Stack()
-        result_stack.props.transition_type = Gtk.StackTransitionType.SLIDE_UP
-        result_stack.props.transition_duration = 250
-        result_stack.add_named(option_tab, "option")
-        result_stack.add_named(image_tab, "image")
-        result_stack.set_visible_child_name("option")
+        result_stack: Adw.NavigationView = Adw.NavigationView()
+        result_stack.push(Adw.NavigationPage().new(option_tab, "option"))
 
         column_list = Gtk.StringList()
         for col in dataset1.columns.to_list():
@@ -89,7 +84,8 @@ class MainWindow(Gtk.ApplicationWindow):
         plot_butt = Gtk.Button(label='Plot')
         option_tab.append(plot_butt)
 
-        main_box.set_center_widget(result_stack)
+        stacks.pop()
+        stacks.push(Adw.NavigationPage().new(child=result_stack, title=button.get_label()))
         if page_type == 'bar':
             plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab,
                               dataset1, x_button, y_button, column_list)
@@ -103,7 +99,7 @@ class MainWindow(Gtk.ApplicationWindow):
             plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab,
                               dataset1, x_button, y_button, column_list)
 
-    def plot_graph(self, button, graph_type, stack: Gtk.Stack, image_tab: Gtk.Box, dataset, x: Gtk.DropDown,
+    def plot_graph(self, button, graph_type, stack: Adw.NavigationView, image_tab: Gtk.Box, dataset, x: Gtk.DropDown,
                    y: Gtk.DropDown,
                    list: Gtk.StringList):
         x = list.get_item(x.get_selected()).get_string()
@@ -122,7 +118,7 @@ class MainWindow(Gtk.ApplicationWindow):
         img = Gtk.Image().new_from_file(".temp.png")
         img.set_size_request(600, 600)
         image_tab.append(img)
-        stack.set_visible_child_name("image")
+        stack.push(Adw.NavigationPage().new(image_tab, "image"))
 
 
 def on_activate(app):
@@ -130,7 +126,7 @@ def on_activate(app):
     win.present()
 
 
-app = Gtk.Application(application_id='com.github.towk.data-science-project')
+app = Adw.Application(application_id='com.github.towk.data-science-project')
 app.connect('activate', on_activate)
 
 app.run(None)

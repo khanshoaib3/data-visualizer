@@ -9,6 +9,12 @@ import pandas as pd
 import plotly.express as px
 
 
+class LabelWithKey(Gtk.Label):
+    def __init__(self, key: str, **properties):
+        super().__init__(**properties)
+        self.key = key
+
+
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, **kargs):
         super().__init__(**kargs, title='Data Analyzer')
@@ -23,6 +29,9 @@ class MainWindow(Adw.ApplicationWindow):
         sidebar: Adw.ToolbarView = Adw.ToolbarView().new()
         sidebar_header: Adw.HeaderBar = Adw.HeaderBar().new()
         sidebar_header.set_show_title(show_title=False)
+        open_file_button: Gtk.Button = Gtk.Button(label='Open')
+        open_file_button.add_css_class('suggested-action')
+        sidebar_header.pack_start(open_file_button)
         sidebar.add_top_bar(sidebar_header)
         sidebar_list_box: Gtk.ListBox = Gtk.ListBox().new()
         sidebar_list_box.add_css_class("navigation-sidebar")
@@ -35,7 +44,7 @@ class MainWindow(Adw.ApplicationWindow):
         select_option_page.add_top_bar(select_option_page_header)
 
         stacks: Adw.NavigationView = Adw.NavigationView().new()
-        default_page: Adw.NavigationPage = Adw.NavigationPage().new_with_tag(child=Gtk.Label(label='Select an option!!'), title='Select Option', tag='option')
+        default_page: Adw.NavigationPage = Adw.NavigationPage().new(child=Gtk.Label(label='Select an option!!'), title='Select Option')
         stacks.push(default_page)
         select_option_page.set_content(stacks)
 
@@ -53,13 +62,14 @@ class MainWindow(Adw.ApplicationWindow):
         }
 
         for key, value in buttons.items():
-            btn = Gtk.Button(label=value)
-            sidebar.get_child().get_content().append(btn)
-            btn.connect('clicked', self.select_result_page_callback, key, stacks)
+            label = LabelWithKey(label=value, key=key)
+            label.set_xalign(0)
+            sidebar_list_box.append(label)
+        sidebar_list_box.connect('row-activated', self.select_result_page_callback, stacks)
 
         return main_box
 
-    def select_result_page_callback(self, button: Gtk.Button, page_type: str, stacks: Adw.NavigationView):
+    def select_result_page_callback(self, _, button: Gtk.ListBoxRow, stacks: Adw.NavigationView):
         dataset1 = pd.read_csv("/home/towk/Projects/test/data-science/covid.csv")
 
         option_tab = Gtk.Box()
@@ -85,7 +95,8 @@ class MainWindow(Adw.ApplicationWindow):
         option_tab.append(plot_butt)
 
         stacks.pop()
-        stacks.push(Adw.NavigationPage().new(child=result_stack, title=button.get_label()))
+        stacks.push(Adw.NavigationPage().new(child=result_stack, title=button.get_child().get_label()))
+        page_type = button.get_child().key
         if page_type == 'bar':
             plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab,
                               dataset1, x_button, y_button, column_list)

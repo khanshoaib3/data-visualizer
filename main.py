@@ -72,7 +72,12 @@ class MainWindow(Adw.ApplicationWindow):
     def select_result_page_callback(self, _, button: Gtk.ListBoxRow, stacks: Adw.NavigationView):
         dataset1 = pd.read_csv("/home/towk/Projects/test/data-science/covid.csv")
 
-        option_tab = Gtk.Box()
+        option_tab: Adw.PreferencesPage = Adw.PreferencesPage().new()
+        option_group: Adw.PreferencesGroup = Adw.PreferencesGroup().new()
+        option_group_2: Adw.PreferencesGroup = Adw.PreferencesGroup().new()
+        option_tab.add(option_group)
+        option_tab.add(option_group_2)
+
         option_tab.set_size_request(600, 600)
         image_tab = Gtk.Box()
 
@@ -83,31 +88,38 @@ class MainWindow(Adw.ApplicationWindow):
         for col in dataset1.columns.to_list():
             column_list.append(col)
 
-        x_button: Gtk.DropDown = Gtk.DropDown.new(column_list)
-        x_button.set_enable_search(True)
-        option_tab.append(x_button)
+        x_button: Adw.ComboRow = Adw.ComboRow().new()
+        # x_button.set_enable_search(True)
+        x_button.set_title('x')
+        x_button.set_model(column_list)
+        option_group.add(x_button)
 
-        y_button: Gtk.DropDown = Gtk.DropDown.new(column_list)
-        y_button.set_enable_search(True)
-        option_tab.append(y_button)
+        y_button: Adw.ComboRow = Adw.ComboRow().new()
+        # y_button.set_enable_search(True)
+        y_button.set_title('y')
+        y_button.set_model(column_list)
+        option_group.add(y_button)
 
-        plot_butt = Gtk.Button(label='Plot')
-        option_tab.append(plot_butt)
+        plot_butt: Adw.ActionRow = Adw.ActionRow().new()
+        plot_butt.set_title('Plot')
+        plot_butt.add_css_class('suggested-action')
+        plot_butt.set_activatable(True)
+        option_group_2.add(plot_butt)
 
         stacks.pop()
         stacks.push(Adw.NavigationPage().new(child=result_stack, title=button.get_child().get_label()))
         page_type = button.get_child().key
         if page_type == 'bar':
-            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab,
+            plot_butt.connect('activated', self.plot_graph, page_type, result_stack, image_tab,
                               dataset1, x_button, y_button, column_list)
         elif page_type == 'bubble':
-            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab,
+            plot_butt.connect('activated', self.plot_graph, page_type, result_stack, image_tab,
                               dataset1, x_button, y_button, column_list)
         elif page_type == 'line':
-            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab,
+            plot_butt.connect('activated', self.plot_graph, page_type, result_stack, image_tab,
                               dataset1, x_button, y_button, column_list)
         elif page_type == 'scatter':
-            plot_butt.connect('clicked', self.plot_graph, page_type, result_stack, image_tab,
+            plot_butt.connect('activated', self.plot_graph, page_type, result_stack, image_tab,
                               dataset1, x_button, y_button, column_list)
 
     def plot_graph(self, button, graph_type, stack: Adw.NavigationView, image_tab: Gtk.Box, dataset, x: Gtk.DropDown,

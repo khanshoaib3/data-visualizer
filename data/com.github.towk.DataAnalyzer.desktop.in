@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=datavisualizer
+Exec=datavisualizer
+Icon=com.github.towk.DataAnalyzer
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true

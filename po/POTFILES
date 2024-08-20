@@ -1,0 +1,6 @@
+data/com.github.towk.DataAnalyzer.desktop.in
+data/com.github.towk.DataAnalyzer.metainfo.xml.in
+data/com.github.towk.DataAnalyzer.gschema.xml
+src/main.py
+src/window.py
+src/window.ui
